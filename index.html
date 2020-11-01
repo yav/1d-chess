@@ -3,26 +3,92 @@
 <style>
 div { margin: 5px; }
 .board { font-size: 32px; color: #000; }
-.board td { min-width: 1.5em; width: 1.5em; height: 1.5em; text-align: center; }
-.w { background-color: #eee; }
-.b { background-color: #0ff; }
+.board td {
+  min-width: 1.5em;
+  width: 1.5em;
+  height: 1.5em;
+  text-align: center;
+}
+.w { background-color: #eff; border: 1px solid #9ff; }
+.b { background-color: #0ff; border: 1px solid #0ee; }
 .clickable { cursor: pointer; }
+.target { cursor: pointer; border: 1px solid black; }
 </style>
 <script>
 
-var pieceNum = 6
 var pieces=[' '
            ,'♔','♕','♖','♗','♘','♙'
            ,'♚','♛','♜','♝','♞','♟'
            ]
 
-
-function owner(p) { return Math.floor((p - 1) / pieceNum); }
+var moves = [ king, queen, rook, bishop, knight, pawn ]
+var pieceNum = moves.length
 
 var initialState =
   { turn: 0
   , board: [ 1,2,3,4,5,6,0,0,0,0,12,11,10,9,8,7]
   }
+
+
+function canMove(state,from,to) {
+  var pFrom = state.board[from]
+  if (pFrom == 0) return false
+
+  var p = owner(pFrom)
+  if (state.turn != p) return false
+
+  var pTo = state.board[to]
+  if (pTo != 0 && owner(pTo) == p) return false // assuming no castling
+
+  return moves[piece(pFrom)](state,from,to)
+}
+
+function rook(state,from,to) {
+  var smaller = Math.min(from,to)
+  var bigger  = Math.max(from,to)
+  var board   = state.board
+  for (var i = smaller + 1; i < bigger; ++i) {
+    if (board[i] != 0) return false
+  }
+  return true
+}
+
+function bishop(state,from,to) {
+  var smaller = Math.min(from,to)
+  var bigger  = Math.max(from,to)
+  var board   = state.board
+  for (var i = smaller + 2; i < bigger; i = i + 2) {
+    if (i < board.length && board[i] != 0) return false
+  }
+  return i == bigger
+}
+
+function queen(state,from,to) {
+  return bishop(state,from,to) || rook(state,from,to)
+}
+
+function knight(state,from,to) {
+  var diff = Math.abs(to-from)
+  return diff == 2 || diff == 3
+}
+
+function pawn(state,from,to) {
+  var dir = state.turn == 0 ? 1 : -1
+  return from + dir == to ||
+         initialState.board[from] == state.board[from] && from + 2 * dir == to
+}
+
+function king(state,from,to) {
+  var diff = Math.abs(to-from)
+  return diff == 1    // XXX: does not account for threatened
+}
+
+function owner(p) { return Math.floor((p - 1) / pieceNum); }
+
+function piece(p) {
+  var q = p - 1
+  return (q < pieceNum) ? q : (q - pieceNum)
+}
 
 function encodeNum(xs,x) { return xs + String.fromCharCode(97 + x) }
 function decodeNum(xs,i) { return xs.charCodeAt(i) - 97 }
@@ -41,7 +107,7 @@ function decodeState(b) {
   var state = {}
   state.turn = decodeNum(b,0)
   state.board = board
-  for (var i = 1; i <= b.length; ++i) {
+  for (var i = 1; i < b.length; ++i) {
     board[i-1] = decodeNum(b,i)
   }
   return state
@@ -52,9 +118,30 @@ function getState() {
   return !x ? initialState : decodeState(x)
 }
 
-function moving(state,i) {
+function moving(state,from) {
+
   return function() {
-    console.log(i)
+    var opts = []
+    for (let to = 0; to < state.board.length; ++to) {
+      let td = document.getElementById("b" + to)
+      let list = td.classList
+      if (list.contains("target")) {
+        list.remove("target")
+        td.onclick = function() { return false }
+      }
+
+      if (canMove(state,from,to)) {
+        list.add("target")
+        td.onclick = function() {
+          state.board[to] = state.board[from]
+          state.board[from] = 0
+          state.turn = 1 - state.turn
+          window.location.href="index.html?state=" + encodeState(state)
+        }
+      }
+    }
+
+    console.log(opts)
   }
 }
 
@@ -71,6 +158,7 @@ function drawState(state) {
     td.classList.add((i % 2 == 0) ? "b" : "w")
     var p = board[i]
     td.textContent = pieces[p]
+    td.setAttribute("id","b" + i)
     if (owner(p) == state.turn) {
       td.classList.add("clickable")
       td.onclick = moving(state,i)
@@ -90,6 +178,7 @@ function drawState(state) {
   body.appendChild(turn)
   body.appendChild(table)
 }
+
 </script>
 </head><body id="main" onload="drawState(getState())"></body>
 </html>
