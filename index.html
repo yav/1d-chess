@@ -1,45 +1,97 @@
 <html>
 <head>
 <style>
+div { margin: 5px; }
 .board { font-size: 32px; color: #000; }
 .board td { min-width: 1.5em; width: 1.5em; height: 1.5em; text-align: center; }
 .w { background-color: #eee; }
 .b { background-color: #0ff; }
+.clickable { cursor: pointer; }
 </style>
 <script>
-var boardSize = 16
 
-var pieces=['♔','♕','♖','♗','♘','♙'
+var pieceNum = 6
+var pieces=[' '
+           ,'♔','♕','♖','♗','♘','♙'
            ,'♚','♛','♜','♝','♞','♟'
            ]
 
-function encodeBoard(state) {
-  var result = ""
-  for (var i = 0; i < boardSize; ++i) {
-    var j = state[i]
-    if (j == null) j = -1;
-    result = result + (j + 1)
+
+function owner(p) { return Math.floor((p - 1) / pieceNum); }
+
+var initialState =
+  { turn: 0
+  , board: [ 1,2,3,4,5,6,0,0,0,0,12,11,10,9,8,7]
+  }
+
+function encodeNum(xs,x) { return xs + String.fromCharCode(97 + x) }
+function decodeNum(xs,i) { return xs.charCodeAt(i) - 97 }
+
+function encodeState(state) {
+  var board  = state.board
+  var result = encodeNum("",state.turn)
+  for (var i = 0; i < board.length; ++i) {
+    result = encodeNum(result, board[i])
   }
   return result
 }
 
-function drawBoard(state) {
-  console.log(window.location.href)
+function decodeState(b) {
+  var board = []
+  var state = {}
+  state.turn = decodeNum(b,0)
+  state.board = board
+  for (var i = 1; i <= b.length; ++i) {
+    board[i-1] = decodeNum(b,i)
+  }
+  return state
+}
+
+function getState() {
+  var x = new URL(window.location).searchParams.get("state")
+  return !x ? initialState : decodeState(x)
+}
+
+function moving(state,i) {
+  return function() {
+    console.log(i)
+  }
+}
+
+function drawState(state) {
   var table = document.createElement("table")
   table.classList.add("board")
   var row   = document.createElement("tr")
   table.appendChild(row)
-  for (var i = 0; i < boardSize; ++i) {
+
+  var board = state.board
+
+  for (var i = 0; i < board.length; ++i) {
     var td = document.createElement("td")
     td.classList.add((i % 2 == 0) ? "b" : "w")
-    var p = state[i]
-    if (p != null) {
-      td.textContent = pieces[p]
+    var p = board[i]
+    td.textContent = pieces[p]
+    if (owner(p) == state.turn) {
+      td.classList.add("clickable")
+      td.onclick = moving(state,i)
     }
     row.appendChild(td)
   }
-  document.getElementById("main").appendChild(table)
+
+  var note = document.createElement("div")
+  note.textContent = "Current state: " + encodeState(state)
+
+
+  var turn = document.createElement("div")
+  turn.textContent = ((state.turn == 0) ? "White" : "Black") + "'s move:"
+
+  var body = document.getElementById("main")
+  body.appendChild(note)
+  body.appendChild(turn)
+  body.appendChild(table)
 }
 </script>
-</head><body id="main" onload="drawBoard([7])"></body>
+</head><body id="main" onload="drawState(getState())"></body>
 </html>
+
+
