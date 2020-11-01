@@ -10,8 +10,9 @@ div { margin: 5px; }
   text-align: center;
 }
 .w { background-color: #eff; border: 1px solid #9ff; }
-.b { background-color: #0ff; border: 1px solid #0ee; }
+.b { background-color: #0ff; border: 1px solid #0dd; }
 .clickable { cursor: pointer; }
+.source { border-bottom: 2px solid black; }
 .target { cursor: pointer; border: 1px solid black; }
 </style>
 <script>
@@ -125,10 +126,12 @@ function moving(state,from) {
     for (let to = 0; to < state.board.length; ++to) {
       let td = document.getElementById("b" + to)
       let list = td.classList
+      list.remove("source")
       if (list.contains("target")) {
         list.remove("target")
         td.onclick = function() { return false }
       }
+      if (from == to) { list.add("source"); }
 
       if (canMove(state,from,to)) {
         list.add("target")
