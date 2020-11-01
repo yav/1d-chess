@@ -1,0 +1,45 @@
+<html>
+<head>
+<style>
+.board { font-size: 32px; color: #000; }
+.board td { min-width: 1.5em; width: 1.5em; height: 1.5em; text-align: center; }
+.w { background-color: #eee; }
+.b { background-color: #0ff; }
+</style>
+<script>
+var boardSize = 16
+
+var pieces=['♔','♕','♖','♗','♘','♙'
+           ,'♚','♛','♜','♝','♞','♟'
+           ]
+
+function encodeBoard(state) {
+  var result = ""
+  for (var i = 0; i < boardSize; ++i) {
+    var j = state[i]
+    if (j == null) j = -1;
+    result = result + (j + 1)
+  }
+  return result
+}
+
+function drawBoard(state) {
+  console.log(window.location.href)
+  var table = document.createElement("table")
+  table.classList.add("board")
+  var row   = document.createElement("tr")
+  table.appendChild(row)
+  for (var i = 0; i < boardSize; ++i) {
+    var td = document.createElement("td")
+    td.classList.add((i % 2 == 0) ? "b" : "w")
+    var p = state[i]
+    if (p != null) {
+      td.textContent = pieces[p]
+    }
+    row.appendChild(td)
+  }
+  document.getElementById("main").appendChild(table)
+}
+</script>
+</head><body id="main" onload="drawBoard([7])"></body>
+</html>
