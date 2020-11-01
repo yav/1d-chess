@@ -14,6 +14,7 @@ div { margin: 5px; }
 .clickable { cursor: pointer; }
 .source { border-bottom: 2px solid black; }
 .target { cursor: pointer; border: 1px solid black; }
+.danger { border-top: 1px solid red; !important; }
 </style>
 <script>
 
@@ -143,9 +144,19 @@ function moving(state,from) {
         }
       }
     }
-
-    console.log(opts)
   }
+}
+
+function threatened(state,p) {
+  var res = false
+  var t = state.turn
+  state.turn = 1 - t
+  for (var i = 0; i < state.board.length; ++i) {
+    res = canMove(state,i,p)
+    if (res) break
+  }
+  state.turn = t
+  return res
 }
 
 function drawState(state) {
@@ -165,6 +176,9 @@ function drawState(state) {
     if (owner(p) == state.turn) {
       td.classList.add("clickable")
       td.onclick = moving(state,i)
+      if (threatened(state,i)) {
+        td.classList.add("danger")
+      }
     }
     row.appendChild(td)
   }
