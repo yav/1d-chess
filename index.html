@@ -77,7 +77,8 @@ function knight(state,from,to) {
 function pawn(state,from,to) {
   var dir = state.turn == 0 ? 1 : -1
   return from + dir == to ||
-         initialState.board[from] == state.board[from] && from + 2 * dir == to
+         initialState.board[from] == state.board[from] && 
+          state.board[from+dir] == 0 && from + 2 * dir == to
 }
 
 function king(state,from,to) {
